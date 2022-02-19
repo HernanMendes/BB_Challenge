@@ -6,6 +6,7 @@ from math import ceil
 LIMITE = 50
 PRIMER_PAG = 1
 OK = 200
+ERROR_NOT_FOUND = 404
 JSON_FILE = 'data.json'
 
 # La funcion guardarPelicula() recorre todas las peliculas que llegaron en el response, guarda los datos 
@@ -38,9 +39,11 @@ def calcularPaginas (response_json):
 
 if __name__ == '__main__':
     contenidos = []
-    url_list = "https://yts.mx/api/v2/list_movies.json"
     args = { 'limit':LIMITE,'page': PRIMER_PAG }
-
+    url_list = "https://yts.mx/api/v2/list_movies.json"
+    url_comments = "https://yts.mx/api/v2/movie_comments.json?movie_id="
+    url_details = "https://yts.mx/api/v2/movie_details.json?movie_id="
+    
     response = requests.get(url_list, params=args)
 
     if response.status_code == OK:
@@ -52,6 +55,7 @@ if __name__ == '__main__':
         total_pages = calcularPaginas(response_json)
         print("Total de paginas: "+str(total_pages))
 
+        #for page in range (1,5):        #Uso este para hacer pruebas acotadas
         for page in range (1,total_pages+1):
             args["page"] = page
             response = requests.get(url_list, params=args)
@@ -61,6 +65,26 @@ if __name__ == '__main__':
                 contenidos = guardarPelicula(response_json,contenidos)
 
             print("Pagina "+str(page)+" leida.")
+
+        ## El endpoint de "Movie Comments" devuelve Error 404 - Not Found, pero dejo comentada la logica que habia pensado
+        '''
+        for pelicula in contenidos:
+            response = requests.get(url_comments+str(pelicula["id"]))
+            
+            if response.status_code == OK:
+                response_json = json.loads(response.text)
+                pelicula["comments"] = response_json["data"]["comments"]
+            elif response.status_code == ERROR_NOT_FOUND:
+                print("ERROR 404: NOT FOUND")
+        '''
+        for pelicula in contenidos:
+            response = requests.get(url_details+str(pelicula["id"]))
+            
+            if response.status_code == OK:
+                response_json = json.loads(response.text)
+                pelicula["like_count"] = response_json["data"]["movie"]["like_count"]
+
+            print("Pelicula "+str(pelicula["id"])+" leida.")
 
         ##print(json.dumps(contenidos, indent=4))
 
