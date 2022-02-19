@@ -6,6 +6,7 @@ from math import ceil
 LIMITE = 50
 PRIMER_PAG = 1
 OK = 200
+JSON_FILE = 'data.json'
 
 # La funcion guardarPelicula() recorre todas las peliculas que llegaron en el response, guarda los datos 
 # de cada pelicula en un diccionario y agrega cada diccionario a una lista donde estaran todos los contenidos
@@ -51,7 +52,7 @@ if __name__ == '__main__':
         total_pages = calcularPaginas(response_json)
         print("Total de paginas: "+str(total_pages))
 
-        for page in range (total_pages):
+        for page in range (1,total_pages+1):
             args["page"] = page
             response = requests.get(url_list, params=args)
 
@@ -61,4 +62,7 @@ if __name__ == '__main__':
 
             print("Pagina "+str(page)+" leida.")
 
-        print(json.dumps(contenidos, indent=4))
+        ##print(json.dumps(contenidos, indent=4))
+
+        with open(JSON_FILE, 'w') as file:
+            json.dump(contenidos, file, indent=4)
