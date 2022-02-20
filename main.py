@@ -14,17 +14,20 @@ JSON_FILE = 'data.json'
 
 def guardarPelicula (response_json, contenidos):
     for i in range (LIMITE):
-            movie = {}
+        movie = {}
+        try:
             movie["id"] = response_json["data"]["movies"][i]["id"]
-            movie["title"] = response_json["data"]["movies"][i]["title"]
-            movie["year"] = response_json["data"]["movies"][i]["year"]
-            movie["synopsis"] = response_json["data"]["movies"][i]["synopsis"]
-            movie["url"] = response_json["data"]["movies"][i]["url"]
-            try:
-                movie["genres"] = response_json["data"]["movies"][i]["genres"]
-            except KeyError:
-                movie["genres"] = []
-            contenidos.append(movie)
+        except IndexError:
+            break
+        movie["title"] = response_json["data"]["movies"][i]["title"]
+        movie["year"] = response_json["data"]["movies"][i]["year"]
+        movie["synopsis"] = response_json["data"]["movies"][i]["synopsis"]
+        movie["url"] = response_json["data"]["movies"][i]["url"]
+        try:
+            movie["genres"] = response_json["data"]["movies"][i]["genres"]
+        except KeyError:
+            movie["genres"] = []
+        contenidos.append(movie)
 
     return contenidos
 
@@ -36,6 +39,22 @@ def calcularPaginas (response_json):
     total_pages = ceil(movie_count/limit)
 
     return total_pages
+
+def guardarInfo (contenidos):
+    for pelicula in contenidos:
+            response = requests.get(url_details+str(pelicula["id"]))
+            
+            if response.status_code == OK:
+                response_json = json.loads(response.text)
+                pelicula["like_count"] = response_json["data"]["movie"]["like_count"]
+                pelicula["rating"] = response_json["data"]["movie"]["rating"]
+                pelicula["runtime"] = response_json["data"]["movie"]["runtime"]
+                pelicula["download_count"] = response_json["data"]["movie"]["download_count"]
+                pelicula["language"] = response_json["data"]["movie"]["language"]
+                pelicula["imdb_code"] = response_json["data"]["movie"]["imdb_code"]
+            print("Pelicula "+str(pelicula["id"])+" leida.")
+
+    return contenidos
 
 if __name__ == '__main__':
     contenidos = []
@@ -55,7 +74,7 @@ if __name__ == '__main__':
         total_pages = calcularPaginas(response_json)
         print("Total de paginas: "+str(total_pages))
 
-        #for page in range (1,5):        #Uso este para hacer pruebas acotadas
+        #for page in range (786,788):        #Uso este para hacer pruebas acotadas
         for page in range (1,total_pages+1):
             args["page"] = page
             response = requests.get(url_list, params=args)
@@ -77,14 +96,8 @@ if __name__ == '__main__':
             elif response.status_code == ERROR_NOT_FOUND:
                 print("ERROR 404: NOT FOUND")
         '''
-        for pelicula in contenidos:
-            response = requests.get(url_details+str(pelicula["id"]))
-            
-            if response.status_code == OK:
-                response_json = json.loads(response.text)
-                pelicula["like_count"] = response_json["data"]["movie"]["like_count"]
 
-            print("Pelicula "+str(pelicula["id"])+" leida.")
+        contenidos = guardarInfo(contenidos)
 
         ##print(json.dumps(contenidos, indent=4))
 
