@@ -14,7 +14,10 @@ JSON_FILE = 'data.json'
 
 def guardarPelicula (response_json, contenidos):
     for i in range (LIMITE):
-        movie = {}
+        movie = {}  
+        # La cantidad de peliculas en la ultima pagina puede ser menos al LIMITE, si esto ocurre
+        # la consulta no devolvera un "id" y el indice de la lista nos dara error, entonces salimos 
+        # del bucle debido a que ya tenemos todas las peliculas cargadas.
         try:
             movie["id"] = response_json["data"]["movies"][i]["id"]
         except IndexError:
@@ -23,6 +26,7 @@ def guardarPelicula (response_json, contenidos):
         movie["year"] = response_json["data"]["movies"][i]["year"]
         movie["synopsis"] = response_json["data"]["movies"][i]["synopsis"]
         movie["url"] = response_json["data"]["movies"][i]["url"]
+        # Algunas peliculas no tienen cargadas los generos, entonces guardamos este campo como una lista vacia
         try:
             movie["genres"] = response_json["data"]["movies"][i]["genres"]
         except KeyError:
@@ -39,6 +43,10 @@ def calcularPaginas (response_json):
     total_pages = ceil(movie_count/limit)
 
     return total_pages
+
+# La funcion guardarInfo() recorre la lista contenidos, donde estan los datos de todas las peliculas, accede al "id"
+# de cada pelicula y con eso realiza la consulta para obtener los datos restantes y los guarda en el diccionario
+# correspondiente a cada contenido
 
 def guardarInfo (contenidos):
     for pelicula in contenidos:
@@ -67,15 +75,12 @@ if __name__ == '__main__':
 
     if response.status_code == OK:
         response_json = json.loads(response.text)       #Diccionario
-        #print(response_json)
-        ##print(type(json.dumps(response_json, indent=4)))
-        ##print(response_json["data"]["movies"][1]["id"])
 
         total_pages = calcularPaginas(response_json)
         print("Total de paginas: "+str(total_pages))
 
-        #for page in range (786,788):        #Uso este para hacer pruebas acotadas
-        for page in range (1,total_pages+1):
+        #for page in range (786,788):           # Uso este para hacer pruebas acotadas
+        for page in range (1,total_pages+1):    # Consultamos todas las paginas 
             args["page"] = page
             response = requests.get(url_list, params=args)
 
@@ -99,7 +104,7 @@ if __name__ == '__main__':
 
         contenidos = guardarInfo(contenidos)
 
-        ##print(json.dumps(contenidos, indent=4))
+        ## Guardamos la lista de contenidos obtenida en un archivo de formato JSON
 
         with open(JSON_FILE, 'w') as file:
             json.dump(contenidos, file, indent=4)
